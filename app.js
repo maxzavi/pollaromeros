@@ -45,7 +45,11 @@ async function cargarParticipantes(){
     participantes.innerHTML="";
 
     const querySnapshot = await getDocs(collection(db,"participantes"));
+    const cantidad = querySnapshot.size;
+    const pozo = cantidad * APORTE;
 
+    totalParticipantes.textContent = cantidad;
+    pozoAcumulado.textContent = `S/. ${pozo.toFixed(2)}`;
     querySnapshot.forEach(doc=>{
 
         const p = doc.data();
@@ -77,4 +81,9 @@ async function cargarParticipantes(){
 
 }
 
+
 cargarParticipantes();
+const totalParticipantes = document.getElementById("totalParticipantes");
+const pozoAcumulado = document.getElementById("pozoAcumulado");
+
+const APORTE = 5.0;
