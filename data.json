@@ -1,0 +1,65 @@
+{
+    "puntos": {
+        "campeon": 10,
+        "subcampeon": 7,
+        "semifinal": 5,
+        "cuartos": 3,
+        "octavos": 1,
+        "grupos": 0
+    },
+    "mostrarPuntajes": false,
+    "bonoCampeon":[3,2,1],
+"equipos": {
+    "Argentina": {
+        "bandera":"🇦🇷",
+        "resultado":"subcampeon"
+    },
+    "Brasil": {
+        "bandera":"🇧🇷",
+        "resultado":"cuartos"
+    },
+    "España": {
+        "bandera":"🇪🇸",
+        "resultado":"semifinal"
+    },
+    "Francia": {
+        "bandera":"🇫🇷",
+        "resultado":"campeon"
+    },
+    "Alemania": {
+        "bandera":"🇩🇪",
+        "resultado":"octavos"
+    },
+    "Inglaterra": {
+        "bandera":"🇬🇧",
+        "resultado":"grupos"
+    }
+},
+
+    "participantes":[
+        {
+            "nombre":"MaxZ",
+            "pronosticos":[
+                "Francia",
+                "España",
+                "Argentina"
+            ]
+        },
+        {
+            "nombre":"Miky Monse",
+            "pronosticos":[
+                "Inglaterra",
+                "Francia",
+                "Argentina"
+            ]
+        },
+        {
+            "nombre":"Laly",
+            "pronosticos":[
+                "Argentina",
+                "Francia",
+                "Brasil"
+            ]
+        }
+    ]
+}
