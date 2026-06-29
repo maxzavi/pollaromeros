@@ -8,8 +8,7 @@ const firebaseConfig = {
     storageBucket: "pollaromeros.firebasestorage.app",
     messagingSenderId: "1085011471930",
     appId: "1:1085011471930:web:310ed17277b04d62ab0f03"
-  }
+};
 
-const app = initializeApp(firebaseConfig);
-
+export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
