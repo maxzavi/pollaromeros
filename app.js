@@ -109,14 +109,16 @@ async function cargarParticipantes() {
 
     querySnapshot.forEach(doc => {
         const p = doc.data();
-
+        const avatar = "./img/avatars/web/" + p.nombre.replace(" ","") + ".webp";
         let total = 0;
 
         let html = `
             <div class="card">
-                <h2>${p.nombre}</h2>
+                <div class="participant-header">
+                    <img class="avatar" src="${avatar}" alt="${p.nombre}">
+                    <h2>${p.nombre}</h2>
+                </div>
         `;
-
         p.pronosticos.forEach((equipo, index) => {
             const bandera = banderas[equipo] || "";
             const { resultado, puntos } = calcularPuntos(equipo, index, equipos);

@@ -230,3 +230,35 @@ h2 {
     padding: 0;
     background: transparent;
 }
+.participant-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:15px;
+}
+
+.participant-header h2{
+    margin:0;
+}
+
+.avatar{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    object-fit:cover;
+    border:2px solid white;
+    box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+
+.ranking-person{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.avatar-ranking{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    object-fit:cover;
+}
