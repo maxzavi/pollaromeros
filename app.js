@@ -6,6 +6,26 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const participantes = document.getElementById("participantes");
+const rankingTitulo = document.getElementById("rankingTitulo");
+const ranking = document.getElementById("ranking");
+const totalParticipantes = document.getElementById("totalParticipantes");
+const pozoAcumulado = document.getElementById("pozoAcumulado");
+
+const APORTE = 5.0;
+
+async function aplicarVisibilidadRanking(){
+    try{
+        const response = await fetch("data.json");
+        const data = await response.json();
+        const mostrarRanking = Boolean(data.mostrarPuntajes);
+
+        rankingTitulo.hidden = !mostrarRanking;
+        ranking.hidden = !mostrarRanking;
+    }catch(error){
+        console.error("No se pudo cargar la configuracion del ranking", error);
+    }
+}
+
 const banderas = {
     "Argentina": "https://flagcdn.com/ar.svg",
     "Brasil": "https://flagcdn.com/br.svg",
@@ -82,8 +102,5 @@ async function cargarParticipantes(){
 }
 
 
+aplicarVisibilidadRanking();
 cargarParticipantes();
-const totalParticipantes = document.getElementById("totalParticipantes");
-const pozoAcumulado = document.getElementById("pozoAcumulado");
-
-const APORTE = 5.0;
