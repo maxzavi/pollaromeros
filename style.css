@@ -69,9 +69,10 @@ ol li{
     font-size:18px;
 
 }
-
-.bandera{
-
-    font-size:28px;
-
+.bandera {
+    width: 32px;
+    height: 24px;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid #ddd;
 }

@@ -1,92 +1,55 @@
-fetch("data.json")
-.then(r=>r.json())
-.then(data=>{
+import { db } from "./firebase.js";
 
-    const ranking=document.getElementById("ranking");
-    const participantes=document.getElementById("participantes");
+import {
+    collection,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-    const lista=[];
+const participantes = document.getElementById("participantes");
+const banderas = {
+    "Argentina": "https://flagcdn.com/ar.svg",
+    "Brasil": "https://flagcdn.com/br.svg",
+    "España": "https://flagcdn.com/es.svg",
+    "Francia": "https://flagcdn.com/fr.svg",
+    "Inglaterra": "https://flagcdn.com/gb-eng.svg",
+    "Alemania": "https://flagcdn.com/de.svg"
+};
 
-    data.participantes.forEach(p=>{
+async function cargarParticipantes(){
 
-        let total=0;
+    participantes.innerHTML="";
+
+    const querySnapshot = await getDocs(collection(db,"participantes"));
+
+    querySnapshot.forEach(doc=>{
+
+        const p = doc.data();
 
         let html=`
+
         <div class="card">
-            <h3>${p.nombre}</h3>
+
+            <h2>${p.nombre}</h2>
+
         `;
 
         p.pronosticos.forEach((equipo,index)=>{
 
-            const info = data.equipos[equipo];
-            const resultado = info.resultado;
-            const bandera = info.bandera;
-            let puntos=data.puntos[resultado];
-
-            if(resultado==="campeon"){
-                puntos+=data.bonoCampeon[index];
-            }
-
-            total+=puntos;
-
             html += `
-            <div class="fila">
-
-                <div class="equipo">
-                    <span class="bandera">${bandera}</span>
-                    <span>${equipo}</span>
-                </div>
-
-                ${
-                    data.mostrarPuntajes
-                    ? `<span>${puntos} pts</span>`
-                    : ""
-                }
-
+            <div class="equipo">
+                <img class="bandera" src="${banderas[equipo]}" alt="${equipo}">
+                <span>${equipo}</span>
             </div>
             `;
 
         });
 
-        if(data.mostrarPuntajes){
-
-            html+=`
-            <div class="total">
-                ${total} pts
-            </div>
-            `;
-
-        }
+        html+="</div>";
 
         participantes.innerHTML+=html;
 
-        lista.push({
-            nombre:p.nombre,
-            puntos:total
-        });
-
     });
 
-    lista.sort((a,b)=>b.puntos-a.puntos);
+}
 
-    let rankingHtml="<ol>";
-
-    lista.forEach(j=>{
-
-        rankingHtml+=`
-        <li>
-            ${j.nombre}
-            <b>${j.puntos} pts</b>
-        </li>
-        `;
-
-    });
-
-    rankingHtml+="</ol>";
-
-    if(data.mostrarPuntajes){
-        ranking.innerHTML=rankingHtml;
-    }else{
-        ranking.style.display="none";
-    }
-});
+cargarParticipantes();
