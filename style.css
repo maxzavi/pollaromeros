@@ -45,13 +45,11 @@ header{
 
 }
 
-ol{
-
+body > ol{
     background:white;
     padding:20px;
     border-radius:12px;
     margin-bottom:30px;
-
 }
 
 ol li{
@@ -144,4 +142,91 @@ ol li{
 .rules-content ul{
     margin-left:20px;
     line-height:1.8;
+}
+.puntaje-equipo{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:4px;
+}
+
+.puntaje-equipo small{
+    color:#777;
+    font-size:12px;
+    text-transform:capitalize;
+}
+
+.puntaje-equipo strong{
+    color:#1565C0;
+}
+.ranking-content{
+    margin-top:20px;
+}
+
+
+.ranking-content li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    margin:0;
+    border-bottom:1px solid #eee;
+}
+
+.ranking-content li:last-child{
+    border-bottom:none;
+}
+
+.bandera-placeholder{
+    width:32px;
+    height:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+@media(max-width:600px){
+
+    body{
+        margin:12px;
+    }
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .card,
+    .rules-card,
+    .resumen-card{
+        padding:16px;
+    }
+
+    .fila{
+        align-items:center;
+        gap:10px;
+    }
+
+    .equipo{
+        font-size:16px;
+    }
+
+    .puntaje-equipo strong{
+        white-space:nowrap;
+    }
+}
+.rules-card,
+.resumen,
+.grid,
+header,
+h2 {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ranking-content ol {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
 }
