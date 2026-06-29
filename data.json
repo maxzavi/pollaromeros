@@ -33,6 +33,14 @@
     "Inglaterra": {
         "bandera":"🇬🇧",
         "resultado":"grupos"
+    },
+    "Colombia": {
+        "bandera":"🇨🇴",
+        "resultado":"grupos"
+    },
+    "Portugal": {
+        "bandera":"🇵🇹",
+        "resultado":"grupos"
     }
 },
 
@@ -54,11 +62,19 @@
             ]
         },
         {
-            "nombre":"Laly",
+            "nombre":"Mami de Laly",
             "pronosticos":[
                 "Argentina",
                 "Francia",
                 "Brasil"
+            ]
+        },
+        {
+            "nombre":"Laly",
+            "pronosticos":[
+                "Argentina",
+                "Colombia",
+                "Portugal"
             ]
         }
     ]
