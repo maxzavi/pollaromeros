@@ -1,4 +1,6 @@
 import { db } from "./firebase.js";
+import { matches } from "./matches.js";
+import { flags } from "./flags.js";
 
 import {
     collection,
@@ -24,58 +26,20 @@ const puntosPorResultado = {
 
 const bonoCampeon = [3, 2, 1];
 
-const banderas = {
-    "Argentina": "https://flagcdn.com/ar.svg",
-    "Brasil": "https://flagcdn.com/br.svg",
-    "España": "https://flagcdn.com/es.svg",
-    "Francia": "https://flagcdn.com/fr.svg",
-    "Inglaterra": "https://flagcdn.com/gb-eng.svg",
-    "Alemania": "https://flagcdn.com/de.svg",
-    "Japón": "https://flagcdn.com/jp.svg",
-    "Paraguay": "https://flagcdn.com/py.svg",
-    "Países Bajos": "https://flagcdn.com/nl.svg",
-    "Marruecos": "https://flagcdn.com/ma.svg",
-    "Costa de Marfil": "https://flagcdn.com/ci.svg",
-    "Noruega": "https://flagcdn.com/no.svg",
-    "Suecia": "https://flagcdn.com/se.svg",
-    "México": "https://flagcdn.com/mx.svg",
-    "Ecuador": "https://flagcdn.com/ec.svg",
-    "República Democrática del Congo": "https://flagcdn.com/cd.svg",
-    "Congo DR": "https://flagcdn.com/cd.svg",
-    "Bélgica": "https://flagcdn.com/be.svg",
-    "Senegal": "https://flagcdn.com/sn.svg",
-    "Estados Unidos": "https://flagcdn.com/us.svg",
-    "Bosnia y Herzegovina": "https://flagcdn.com/ba.svg",
-    "Austria": "https://flagcdn.com/at.svg",
-    "Portugal": "https://flagcdn.com/pt.svg",
-    "Croacia": "https://flagcdn.com/hr.svg",
-    "Suiza": "https://flagcdn.com/ch.svg",
-    "Argelia": "https://flagcdn.com/dz.svg",
-    "Australia": "https://flagcdn.com/au.svg",
-    "Egipto": "https://flagcdn.com/eg.svg",
-    "Cabo Verde": "https://flagcdn.com/cv.svg",
-    "Colombia": "https://flagcdn.com/co.svg",
-    "Ghana": "https://flagcdn.com/gh.svg"
-};
 
 function calcularPuntos(equipo, posicion, equipos) {
     const resultado = equipos[equipo]?.resultado || "grupos";
-
     let puntos = puntosPorResultado[resultado] || 0;
 
     if (resultado === "campeon") {
         puntos += bonoCampeon[posicion] || 0;
     }
 
-    return {
-        resultado,
-        puntos
-    };
+    return { resultado, puntos };
 }
 
 async function cargarEquipos() {
     const snapshot = await getDocs(collection(db, "equipos"));
-
     const equipos = {};
 
     snapshot.forEach(doc => {
@@ -92,6 +56,27 @@ function medalla(index) {
     return `${index + 1}.`;
 }
 
+function renderTeam(nombre, score, penalties, isWinner) {
+    const flag = flags[nombre];
+
+    return `
+        <div class="team ${isWinner ? "winner" : ""}">
+            <span class="team-name">
+                ${
+                    flag
+                        ? `<img class="bandera" src="${flag}" alt="${nombre}">`
+                        : `<span class="bandera-placeholder">🏳️</span>`
+                }
+                ${nombre}
+            </span>
+
+            <strong>
+                ${score ?? ""}
+                ${penalties !== null && penalties !== undefined ? `(${penalties})` : ""}
+            </strong>
+        </div>
+    `;
+}
 async function cargarParticipantes() {
     participantes.innerHTML = "";
     ranking.innerHTML = "";
@@ -109,7 +94,8 @@ async function cargarParticipantes() {
 
     querySnapshot.forEach(doc => {
         const p = doc.data();
-        const avatar = "./img/avatars/web/" + p.nombre.replace(" ","") + ".webp";
+        const avatar = "./img/avatars/web/" + p.nombre.replaceAll(" ", "") + ".webp";
+
         let total = 0;
 
         let html = `
@@ -119,8 +105,9 @@ async function cargarParticipantes() {
                     <h2>${p.nombre}</h2>
                 </div>
         `;
+
         p.pronosticos.forEach((equipo, index) => {
-            const bandera = banderas[equipo] || "";
+            const bandera = flags[equipo] || "";
             const { resultado, puntos } = calcularPuntos(equipo, index, equipos);
 
             total += puntos;
@@ -156,7 +143,7 @@ async function cargarParticipantes() {
         listaRanking.push({
             nombre: p.nombre,
             puntos: total,
-            avatar: "./img/avatars/web/" + p.nombre.replace(" ","") + ".webp"
+            avatar
         });
     });
 
@@ -180,4 +167,102 @@ async function cargarParticipantes() {
     `;
 }
 
+function formatFecha(kickoff) {
+    if (!kickoff) return "";
+
+    return new Date(kickoff).toLocaleString("es-PE", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "America/Lima"
+    });
+}
+
+function formatDia(kickoff) {
+    if (!kickoff) return "Sin fecha";
+
+    return new Date(kickoff).toLocaleDateString("es-PE", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        timeZone: "America/Lima"
+    });
+}
+
+function resolverEquipo(ref) {
+    if (!ref) return "TBD";
+
+    const match = matches[ref];
+
+    if (match) {
+        return match.winner || `Ganador ${ref}`;
+    }
+
+    return ref;
+}
+
+function renderBracket(fase = "Todos") {
+    const container = document.getElementById("bracketContainer");
+
+    let lista = Object.entries(matches)
+        .map(([id, data]) => ({ id, ...data }));
+
+    if (fase !== "Todos") {
+        lista = lista.filter(m => m.fase === fase);
+    }
+
+    lista.sort((a, b) => {
+        if (a.kickoff && b.kickoff) {
+            return new Date(a.kickoff) - new Date(b.kickoff);
+        }
+
+        return a.orden - b.orden;
+    });
+
+    const grupos = {};
+
+    lista.forEach(m => {
+        const dia = formatDia(m.kickoff);
+
+        if (!grupos[dia]) {
+            grupos[dia] = [];
+        }
+
+        grupos[dia].push(m);
+    });
+
+    container.innerHTML = Object.entries(grupos).map(([dia, partidos]) => `
+        <div class="match-day">
+            <h3>${dia}</h3>
+
+            ${partidos.map(m => {
+                const equipo1 = resolverEquipo(m.team1);
+                const equipo2 = resolverEquipo(m.team2);
+
+                return `
+                    <div class="match-card">
+                        <div class="match-title">${m.id} · ${m.fase}</div>
+                        <div class="match-date">${formatFecha(m.kickoff)}</div>
+
+                        ${renderTeam(equipo1, m.score1, m.pen1, m.winner === equipo1)}
+                        ${renderTeam(equipo2, m.score2, m.pen2, m.winner === equipo2)}
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `).join("");
+}
+
+document.querySelectorAll(".tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderBracket(btn.dataset.fase);
+    });
+});
+
 cargarParticipantes();
+renderBracket("Todos");

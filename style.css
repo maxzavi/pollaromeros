@@ -262,3 +262,73 @@ h2 {
     border-radius:50%;
     object-fit:cover;
 }
+
+.bracket-tabs{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    margin:18px 0;
+}
+
+.tab{
+    border:0;
+    padding:10px 14px;
+    border-radius:999px;
+    background:#e9eef7;
+    color:#1565C0;
+    font-weight:bold;
+    cursor:pointer;
+    white-space:nowrap;
+}
+
+.tab.active{
+    background:#1565C0;
+    color:white;
+}
+
+.bracket-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:12px;
+}
+
+.match-card{
+    border:1px solid #eee;
+    border-radius:12px;
+    padding:12px;
+    background:#fafafa;
+}
+
+.team{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    color:#555;
+}
+
+.team:first-child{
+    border-bottom:1px solid #eee;
+}
+
+.team.winner{
+    font-weight:bold;
+    color:#1565C0;
+}
+
+.match-title{
+    font-size:13px;
+    font-weight:bold;
+    color:#1565C0;
+    margin-bottom:6px;
+}
+
+.match-date{
+    font-size:12px;
+    color:#777;
+    margin-bottom:8px;
+}
+.team-name{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
