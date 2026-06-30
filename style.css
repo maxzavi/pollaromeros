@@ -332,3 +332,149 @@ h2 {
     align-items:center;
     gap:10px;
 }
+.match-admin{
+
+    background:#fff;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.12);
+
+}
+
+.match-admin-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+
+}
+
+.match-admin-header h3{
+
+    margin:0;
+    color:#1565C0;
+
+}
+
+.match-admin small{
+
+    color:#666;
+
+}
+
+.team-admin{
+
+    display:grid;
+    grid-template-columns:1fr 70px 70px;
+    gap:10px;
+    align-items:center;
+    margin:12px 0;
+
+}
+
+.team-admin-name{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+}
+
+.team-admin input{
+
+    text-align:center;
+    font-size:18px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    padding:8px;
+
+}
+
+.winner-select{
+
+    margin-top:15px;
+
+}
+
+.save-match{
+
+    margin-top:20px;
+    width:100%;
+    border:none;
+    background:#1565C0;
+    color:white;
+    border-radius:10px;
+    padding:12px;
+    cursor:pointer;
+    font-size:15px;
+    font-weight:bold;
+
+}
+
+.save-match:hover{
+
+    background:#0d47a1;
+
+}
+
+.match-admin{
+    background:#fff;
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.12);
+}
+
+.match-admin-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.match-admin-header h3{
+    margin:0;
+    color:#1565C0;
+}
+
+.match-admin small{
+    color:#666;
+}
+
+.team-admin{
+    display:grid;
+    grid-template-columns:1fr 70px 70px;
+    gap:10px;
+    align-items:center;
+    margin:12px 0;
+}
+
+.team-admin-name{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.team-admin input,
+.winner-select select{
+    padding:8px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+.team-admin input{
+    text-align:center;
+}
+
+.save-match{
+    margin-top:15px;
+    width:100%;
+    border:none;
+    background:#1565C0;
+    color:white;
+    border-radius:10px;
+    padding:12px;
+    font-weight:bold;
+}

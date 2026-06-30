@@ -18,13 +18,23 @@
   <button id="btnLogout" hidden>Cerrar sesión</button>
   <p id="userInfo"></p>
 </section>
-
-<section id="adminPanel" class="rules-card" hidden>
-  <h2>Actualizar resultados</h2>
-  <div id="equiposAdmin"></div>
-</section>
 <!--button  id="btnImportMatches">
     Importar partidos
 </button-->
+<section id="adminPanel" class="rules-card" hidden>
+
+  <details open>
+    <summary>⚽ Fases de equipos</summary>
+    <div id="equiposAdmin"></div>
+  </details>
+
+  <hr>
+
+  <details open>
+    <summary>🗓️ Resultados de partidos</summary>
+    <div id="matchesAdmin"></div>
+  </details>
+
+</section>
 </body>
 </html>
