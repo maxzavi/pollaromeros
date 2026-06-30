@@ -1,4 +1,5 @@
 import { app, db } from "./firebase.js";
+import { matches } from "./matches.js";
 
 import {
     getAuth,
@@ -12,8 +13,10 @@ import {
     collection,
     getDocs,
     updateDoc,
-    doc
+    doc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
 
 const ADMIN_EMAIL = "mzavaletav@gmail.com";
 
@@ -120,3 +123,47 @@ window.actualizar = async(id,resultado)=>{
     });
 
 };
+
+async function importarMatches(){
+
+    if(!confirm("¿Importar todos los partidos a Firestore?"))
+        return;
+
+    const boton=document.getElementById("btnImportMatches");
+
+    boton.disabled=true;
+    boton.textContent="Importando...";
+
+    try{
+
+        for(const [id,data] of Object.entries(matches)){
+
+            await setDoc(
+                doc(db,"matches",id),
+                data
+            );
+
+            console.log(id);
+        }
+
+        alert("Todos los partidos fueron importados.");
+
+    }catch(e){
+
+        console.error(e);
+
+        alert("Error importando.");
+
+    }finally{
+
+        boton.disabled=false;
+        boton.textContent="Importar partidos";
+
+    }
+
+}
+
+document
+    .getElementById("btnImportMatches")
+    .addEventListener("click",importarMatches);
+    

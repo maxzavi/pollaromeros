@@ -1,5 +1,4 @@
 import { db } from "./firebase.js";
-import { matches } from "./matches.js";
 import { flags } from "./flags.js";
 
 import {
@@ -25,7 +24,6 @@ const puntosPorResultado = {
 };
 
 const bonoCampeon = [3, 2, 1];
-
 
 function calcularPuntos(equipo, posicion, equipos) {
     const resultado = equipos[equipo]?.resultado || "grupos";
@@ -77,6 +75,7 @@ function renderTeam(nombre, score, penalties, isWinner) {
         </div>
     `;
 }
+
 async function cargarParticipantes() {
     participantes.innerHTML = "";
     ranking.innerHTML = "";
@@ -192,7 +191,7 @@ function formatDia(kickoff) {
     });
 }
 
-function resolverEquipo(ref) {
+function resolverEquipo(ref, matches) {
     if (!ref) return "TBD";
 
     const match = matches[ref];
@@ -204,7 +203,7 @@ function resolverEquipo(ref) {
     return ref;
 }
 
-function renderBracket(fase = "Todos") {
+function renderBracket(matches, fase = "Todos") {
     const container = document.getElementById("bracketContainer");
 
     let lista = Object.entries(matches)
@@ -239,8 +238,8 @@ function renderBracket(fase = "Todos") {
             <h3>${dia}</h3>
 
             ${partidos.map(m => {
-                const equipo1 = resolverEquipo(m.team1);
-                const equipo2 = resolverEquipo(m.team2);
+                const equipo1 = resolverEquipo(m.team1, matches);
+                const equipo2 = resolverEquipo(m.team2, matches);
 
                 return `
                     <div class="match-card">
@@ -256,13 +255,30 @@ function renderBracket(fase = "Todos") {
     `).join("");
 }
 
-document.querySelectorAll(".tab").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        renderBracket(btn.dataset.fase);
+async function cargarMatches() {
+    const snapshot = await getDocs(collection(db, "matches"));
+    const data = {};
+
+    snapshot.forEach(doc => {
+        data[doc.id] = doc.data();
     });
-});
+
+    return data;
+}
+
+async function iniciarLlave() {
+    const matches = await cargarMatches();
+
+    document.querySelectorAll(".tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderBracket(matches, btn.dataset.fase);
+        });
+    });
+
+    renderBracket(matches, "Todos");
+}
 
 cargarParticipantes();
-renderBracket("Todos");
+iniciarLlave();
