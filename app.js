@@ -155,7 +155,8 @@ async function cargarParticipantes() {
 
         listaRanking.push({
             nombre: p.nombre,
-            puntos: total
+            puntos: total,
+            avatar: "./img/avatars/web/" + p.nombre.replace(" ","") + ".webp"
         });
     });
 
@@ -167,7 +168,11 @@ async function cargarParticipantes() {
         <ol>
             ${listaRanking.map((j, index) => `
                 <li>
-                    <span>${medalla(index)} ${j.nombre}</span>
+                    <span class="ranking-person">
+                        <img class="avatar-ranking" src="${j.avatar}" alt="${j.nombre}">
+                        ${medalla(index)} ${j.nombre}
+                    </span>
+
                     <b>${j.puntos} pts</b>
                 </li>
             `).join("")}
