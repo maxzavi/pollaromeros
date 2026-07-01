@@ -217,7 +217,7 @@ async function cargarParticipantes() {
 
     querySnapshot.forEach(doc => {
         const p = doc.data();
-        const avatar = "./img/avatars/web/" + p.nombre.replaceAll(" ", "") + ".webp";
+        const avatar = `./img/avatars/web/${doc.id}.webp`;
 
         let total = 0;
 
