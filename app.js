@@ -40,6 +40,17 @@ function calcularPuntos(equipo, posicion, equipos) {
     return { resultado, puntos };
 }
 
+function tieneMarcador(match) {
+    return match.score1 !== null
+        && match.score1 !== undefined
+        && match.score2 !== null
+        && match.score2 !== undefined;
+}
+
+function estadoPartido(match) {
+    return tieneMarcador(match) ? "Con marcador" : "Pendiente";
+}
+
 function medalla(index) {
     if (index === 0) return "🥇";
     if (index === 1) return "🥈";
@@ -113,13 +124,17 @@ function renderBracketNode(match, matches) {
 
     const team1 = getMatchTeam(match, "team1", matches);
     const team2 = getMatchTeam(match, "team2", matches);
+    const statusClass = tieneMarcador(match) ? "is-scored" : "is-pending";
     const source = matches[match.team1] || matches[match.team2]
         ? `<div class="bracket-source">← ${match.team1} + ${match.team2}</div>`
         : "";
 
     return `
-        <div class="bracket-match">
-            <div class="bracket-match-id">${match.id} · ${match.fase}</div>
+        <div class="bracket-match ${statusClass}">
+            <div class="bracket-match-head">
+                <div class="bracket-match-id">${match.id} · ${match.fase}</div>
+                <span class="match-status">${estadoPartido(match)}</span>
+            </div>
             ${source}
             ${renderBracketTeamLine(team1)}
             ${renderBracketTeamLine(team2)}
@@ -400,10 +415,14 @@ function renderBracket(matches, fase = "Todos") {
             ${partidos.map(m => {
                 const equipo1 = resolverEquipo(m.team1, matches);
                 const equipo2 = resolverEquipo(m.team2, matches);
+                const statusClass = tieneMarcador(m) ? "is-scored" : "is-pending";
 
                 return `
-                    <div class="match-card">
-                        <div class="match-title">${m.id} · ${m.fase}</div>
+                    <div class="match-card ${statusClass}">
+                        <div class="match-card-head">
+                            <div class="match-title">${m.id} · ${m.fase}</div>
+                            <span class="match-status">${estadoPartido(m)}</span>
+                        </div>
                         <div class="match-date">${formatFecha(m.kickoff)}</div>
 
                         ${renderTeam(equipo1, m.score1, m.pen1, m.winner === equipo1)}
