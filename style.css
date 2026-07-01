@@ -87,6 +87,22 @@ header{
     cursor:not-allowed;
 }
 
+.toggle-finalized{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin:16px 0 0;
+    color:#334155;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.toggle-finalized input{
+    width:18px;
+    height:18px;
+    accent-color:#1565C0;
+}
+
 @media(max-width:640px){
     .equipo-admin-row{
         grid-template-columns:1fr;

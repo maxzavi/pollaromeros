@@ -31,7 +31,9 @@ const statusInfo = document.getElementById("statusInfo");
 const authCard = document.querySelector(".auth-card");
 const adminPanel = document.getElementById("adminPanel");
 const equiposAdmin = document.getElementById("equiposAdmin");
+const hideFinalizedMatches = document.getElementById("hideFinalizedMatches");
 let partidosMap = {};
+let partidosLista = [];
 let unsubscribeEquipos = null;
 let unsubscribePartidos = null;
 
@@ -51,6 +53,8 @@ btnLogin.onclick = async () => {
 };
 
 btnLogout.onclick = () => signOut(auth);
+
+hideFinalizedMatches.addEventListener("change", renderizarListaPartidos);
 
 function escapeHtml(value) {
     return String(value ?? "")
@@ -489,6 +493,16 @@ function renderizarPartidosDependientes(id, visitados = new Set()) {
         });
 }
 
+function renderizarListaPartidos() {
+    matchesAdmin.innerHTML = "";
+
+    const partidosVisibles = hideFinalizedMatches.checked
+        ? partidosLista.filter(p => p.finalizado !== true)
+        : partidosLista;
+
+    partidosVisibles.forEach(p => matchesAdmin.appendChild(crearTarjetaPartido(p)));
+}
+
 function cargarPartidos() {
     if (unsubscribePartidos) {
         unsubscribePartidos();
@@ -497,18 +511,16 @@ function cargarPartidos() {
     matchesAdmin.innerHTML = "";
 
     unsubscribePartidos = onSnapshot(collection(db, "matches"), snapshot => {
-        matchesAdmin.innerHTML = "";
-
         partidosMap = {};
-        const partidos = [];
+        partidosLista = [];
 
         snapshot.forEach(d => {
             const item = { id: d.id, ...d.data() };
             partidosMap[d.id] = item;
-            partidos.push(item);
+            partidosLista.push(item);
         });
 
-        partidos.sort((a, b) => {
+        partidosLista.sort((a, b) => {
             if (a.kickoff && b.kickoff) {
                 return new Date(a.kickoff) - new Date(b.kickoff);
             }
@@ -516,7 +528,7 @@ function cargarPartidos() {
             return a.orden - b.orden;
         });
 
-        partidos.forEach(p => matchesAdmin.appendChild(crearTarjetaPartido(p)));
+        renderizarListaPartidos();
     });
 }
 async function guardarPartido(id, boton) {
