@@ -434,98 +434,27 @@ h2 {
     align-items:center;
     gap:10px;
 }
-.match-admin{
-
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 3px 10px rgba(0,0,0,.12);
-
+#adminPanel{
+    max-width:min(1600px, calc(100vw - 40px));
 }
 
-.match-admin-header{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:15px;
-
-}
-
-.match-admin-header h3{
-
-    margin:0;
-    color:#1565C0;
-
-}
-
-.match-admin small{
-
-    color:#666;
-
-}
-
-.team-admin{
-
+#matchesAdmin{
     display:grid;
-    grid-template-columns:1fr 70px 70px;
-    gap:10px;
-    align-items:center;
-    margin:12px 0;
-
+    grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));
+    gap:16px;
+    align-items:start;
+    margin-top:16px;
 }
 
-.team-admin-name{
-
-    display:flex;
-    align-items:center;
-    gap:10px;
-
-}
-
-.team-admin input{
-
-    text-align:center;
-    font-size:18px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    padding:8px;
-
-}
-
-.winner-select{
-
-    margin-top:15px;
-
-}
-
-.save-match{
-
-    margin-top:20px;
-    width:100%;
-    border:none;
-    background:#1565C0;
-    color:white;
+.match-admin{
+    background:#fff;
+    border:1px solid #e1e7ef;
     border-radius:10px;
-    padding:12px;
-    cursor:pointer;
-    font-size:15px;
-    font-weight:bold;
-
-}
-
-.save-match:hover{
-
-    background:#0d47a1;
-
-}
-
-.match-admin{
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:20px;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    padding:16px;
     box-shadow:0 3px 10px rgba(0,0,0,.12);
 }
 
@@ -547,7 +476,7 @@ h2 {
 
 .team-admin{
     display:grid;
-    grid-template-columns:1fr 70px 70px;
+    grid-template-columns:minmax(180px, 1fr) 56px 56px;
     gap:10px;
     align-items:center;
     margin:12px 0;
@@ -557,26 +486,76 @@ h2 {
     display:flex;
     align-items:center;
     gap:10px;
+    min-width:0;
+}
+
+.team-admin-name span{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 
 .team-admin input,
 .winner-select select{
+    box-sizing:border-box;
     padding:8px;
     border-radius:8px;
     border:1px solid #ccc;
+    width:100%;
 }
 
 .team-admin input{
+    font-size:16px;
     text-align:center;
 }
 
+.winner-select{
+    margin-top:12px;
+}
+
+.winner-select label{
+    color:#666;
+    display:block;
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+
+.winner-select select:disabled{
+    background:#f6f8fb;
+    color:#333;
+    opacity:1;
+}
+
 .save-match{
-    margin-top:15px;
+    cursor:pointer;
+    font-size:15px;
+    margin-top:14px;
     width:100%;
     border:none;
     background:#1565C0;
     color:white;
-    border-radius:10px;
+    border-radius:8px;
     padding:12px;
     font-weight:bold;
+}
+
+.save-match:hover{
+    background:#0d47a1;
+}
+
+@media(max-width:420px){
+    #adminPanel{
+        max-width:none;
+    }
+
+    #matchesAdmin{
+        grid-template-columns:1fr;
+    }
+
+    .team-admin{
+        grid-template-columns:minmax(0, 1fr) 52px 52px;
+        gap:8px;
+    }
 }
