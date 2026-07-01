@@ -8,7 +8,7 @@
   <link rel="icon" href="./favicon.svg?v=2" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./favicon-180.png?v=2">
   <link rel="stylesheet" href="style.css">
-  <script type="module" src="admin.js?v=7"></script>
+  <script type="module" src="admin.js?v=16"></script>
 </head>
 <body>
 
@@ -16,10 +16,25 @@
   <h1>⚙️ Admin Polla Mundial</h1>
 </header>
 
-<section class="rules-card">
-  <button id="btnLogin">Ingresar con Google</button>
-  <button id="btnLogout" hidden>Cerrar sesión</button>
-  <p id="userInfo"></p>
+<section class="rules-card auth-card">
+  <button id="btnLogin" class="auth-button login-button" type="button">
+    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15 3h4a2 2 0 0 1 2 2v4"/>
+      <path d="M10 14 21 3"/>
+      <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+    </svg>
+    Ingresar con Google
+  </button>
+  <div id="userInfo" class="user-profile"></div>
+  <button id="btnLogout" class="auth-button logout-button" type="button" hidden>
+    <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <path d="M16 17l5-5-5-5"/>
+      <path d="M21 12H9"/>
+    </svg>
+    Cerrar sesión
+  </button>
+  <p id="statusInfo" class="status-info"></p>
 </section>
 <!--button  id="btnImportMatches">
     Importar partidos

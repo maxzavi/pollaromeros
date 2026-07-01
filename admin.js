@@ -27,6 +27,8 @@ const provider = new GoogleAuthProvider();
 const btnLogin = document.getElementById("btnLogin");
 const btnLogout = document.getElementById("btnLogout");
 const userInfo = document.getElementById("userInfo");
+const statusInfo = document.getElementById("statusInfo");
+const authCard = document.querySelector(".auth-card");
 const adminPanel = document.getElementById("adminPanel");
 const equiposAdmin = document.getElementById("equiposAdmin");
 let partidosMap = {};
@@ -50,6 +52,35 @@ btnLogin.onclick = async () => {
 
 btnLogout.onclick = () => signOut(auth);
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function renderUserInfo(user, autorizado = true) {
+    const nombre = user.displayName || user.email;
+    const inicial = (nombre || "?").trim().charAt(0).toUpperCase();
+    const nombreSeguro = escapeHtml(nombre);
+    const emailSeguro = escapeHtml(user.email);
+    const avatarSeguro = user.photoURL ? escapeHtml(user.photoURL) : "";
+    const inicialSeguro = escapeHtml(inicial);
+
+    userInfo.innerHTML = `
+        ${avatarSeguro
+            ? `<img class="user-avatar" src="${avatarSeguro}" alt="${nombreSeguro}" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;user-avatar user-avatar-fallback&quot;>${inicialSeguro}</span>'">`
+            : `<span class="user-avatar user-avatar-fallback">${inicialSeguro}</span>`}
+        <span class="user-meta">
+            <strong>${nombreSeguro}</strong>
+            <small>${emailSeguro}</small>
+        </span>
+        ${autorizado ? "" : `<span class="auth-badge">No autorizado</span>`}
+    `;
+}
+
 onAuthStateChanged(auth, async user => {
 
     console.log(user);
@@ -59,8 +90,10 @@ onAuthStateChanged(auth, async user => {
 
         btnLogin.hidden = false;
         btnLogout.hidden = true;
+        authCard.classList.remove("is-authenticated");
         adminPanel.hidden = true;
         userInfo.innerHTML = "";
+        statusInfo.textContent = "";
 
         return;
 
@@ -68,14 +101,16 @@ onAuthStateChanged(auth, async user => {
 
     btnLogin.hidden = true;
     btnLogout.hidden = false;
+    authCard.classList.add("is-authenticated");
 
-    userInfo.innerHTML = user.email;
+    renderUserInfo(user);
+    statusInfo.textContent = "";
 
     if (user.email !== ADMIN_EMAIL) {
         detenerListeners();
 
         adminPanel.hidden = true;
-        userInfo.innerHTML += "<br>No autorizado";
+        renderUserInfo(user, false);
 
         return;
 
@@ -109,16 +144,33 @@ function cargarEquipos(){
     unsubscribeEquipos = onSnapshot(collection(db,"equipos"), snapshot => {
         equiposAdmin.innerHTML="";
 
-        snapshot.forEach(d=>{
+        const equipos = [];
 
-            const e = d.data();
+        snapshot.forEach(d => {
+            equipos.push({
+                id: d.id,
+                ...d.data()
+            });
+        });
+
+        equipos.sort((a, b) => {
+            if ((a.finalizado === true) !== (b.finalizado === true)) {
+                return a.finalizado === true ? 1 : -1;
+            }
+
+            return (a.nombre || a.id).localeCompare(b.nombre || b.id, "es");
+        });
+
+        equipos.forEach(e=>{
+
+            const finalizado = e.finalizado === true;
 
             equiposAdmin.innerHTML += `
-                <div class="fila">
+                <div class="fila equipo-admin-row ${finalizado ? "is-finalized" : ""}" data-equipo-id="${e.id}">
 
                     <span>${e.nombre}</span>
 
-                    <select onchange="actualizar('${d.id}',this.value)">
+                    <select ${finalizado ? "disabled" : ""}>
 
                         <option ${e.resultado=="grupos"?"selected":""}>grupos</option>
                         <option ${e.resultado=="octavos"?"selected":""}>octavos</option>
@@ -129,15 +181,28 @@ function cargarEquipos(){
 
                     </select>
 
+                    <button class="finalize-team" type="button" ${finalizado ? "disabled" : ""}>
+                        Finalizó
+                    </button>
+
                 </div>
             `;
 
+        });
+
+        equiposAdmin.querySelectorAll(".equipo-admin-row").forEach(row => {
+            const id = row.dataset.equipoId;
+            const select = row.querySelector("select");
+            const finalizeButton = row.querySelector(".finalize-team");
+
+            select.addEventListener("change", () => actualizar(id, select.value));
+            finalizeButton.addEventListener("click", () => finalizarEquipo(id, finalizeButton));
         });
     });
 
 }
 
-window.actualizar = async(id,resultado)=>{
+async function actualizar(id, resultado){
 
     await updateDoc(doc(db,"equipos",id),{
 
@@ -145,7 +210,48 @@ window.actualizar = async(id,resultado)=>{
 
     });
 
-};
+}
+
+async function finalizarEquipo(id, boton) {
+    const row = equiposAdmin.querySelector(`[data-equipo-id="${id}"]`);
+    const select = row?.querySelector("select");
+    const resultado = select?.value;
+
+    if (!confirm(`¿Finalizar la fase del equipo ${id}? Ya no se podrá editar desde admin.`)) {
+        return;
+    }
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Finalizando...";
+    }
+
+    try {
+        await updateDoc(doc(db, "equipos", id), {
+            resultado,
+            finalizado: true
+        });
+
+        statusInfo.textContent = `Equipo ${id} finalizado`;
+
+        if (row) {
+            row.classList.add("is-finalized");
+        }
+
+        if (select) {
+            select.disabled = true;
+        }
+    } catch (e) {
+        console.error(e);
+        statusInfo.textContent = `Error finalizando ${id}`;
+        alert(e.message);
+
+        if (boton) {
+            boton.disabled = false;
+            boton.textContent = "Finalizó";
+        }
+    }
+}
 
 async function importarMatches(){
 
@@ -417,7 +523,7 @@ async function guardarPartido(id, boton) {
     const partido = partidosMap[id];
 
     if (partido.finalizado === true) {
-        userInfo.textContent = `Partido ${id} ya está finalizado`;
+        statusInfo.textContent = `Partido ${id} ya está finalizado`;
         return;
     }
 
@@ -439,12 +545,12 @@ async function guardarPartido(id, boton) {
             ...cambios
         };
 
-        userInfo.textContent = `Partido ${id} actualizado`;
+        statusInfo.textContent = `Partido ${id} actualizado`;
 
         renderizarPartidosDependientes(id);
     } catch (e) {
         console.error(e);
-        userInfo.textContent = `Error actualizando ${id}`;
+        statusInfo.textContent = `Error actualizando ${id}`;
         alert(e.message);
     } finally {
         if (boton) {
@@ -461,12 +567,12 @@ async function finalizarPartido(id, boton) {
     const resultado = leerResultadoPartido(id, team1, team2);
 
     if (resultado.score1 === null || resultado.score2 === null) {
-        userInfo.textContent = `Completa los goles de ${id} antes de finalizar`;
+        statusInfo.textContent = `Completa los goles de ${id} antes de finalizar`;
         return;
     }
 
     if (!resultado.winner) {
-        userInfo.textContent = `Completa los penales de ${id} para definir ganador`;
+        statusInfo.textContent = `Completa los penales de ${id} para definir ganador`;
         return;
     }
 
@@ -494,12 +600,12 @@ async function finalizarPartido(id, boton) {
         };
         finalizadoOk = true;
 
-        userInfo.textContent = `Partido ${id} finalizado`;
+        statusInfo.textContent = `Partido ${id} finalizado`;
         renderizarPartido(id);
         renderizarPartidosDependientes(id);
     } catch (e) {
         console.error(e);
-        userInfo.textContent = `Error finalizando ${id}`;
+        statusInfo.textContent = `Error finalizando ${id}`;
         alert(e.message);
     } finally {
         if (boton && !finalizadoOk) {
