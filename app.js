@@ -3,7 +3,7 @@ import { flags } from "./flags.js";
 
 import {
     collection,
-    getDocs
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
 const participantes = document.getElementById("participantes");
@@ -24,6 +24,10 @@ const puntosPorResultado = {
 };
 
 const bonoCampeon = [3, 2, 1];
+let equipos = {};
+let participantesSnapshot = null;
+let matches = {};
+let faseActiva = "Llave";
 
 function calcularPuntos(equipo, posicion, equipos) {
     const resultado = equipos[equipo]?.resultado || "grupos";
@@ -34,17 +38,6 @@ function calcularPuntos(equipo, posicion, equipos) {
     }
 
     return { resultado, puntos };
-}
-
-async function cargarEquipos() {
-    const snapshot = await getDocs(collection(db, "equipos"));
-    const equipos = {};
-
-    snapshot.forEach(doc => {
-        equipos[doc.id] = doc.data();
-    });
-
-    return equipos;
 }
 
 function medalla(index) {
@@ -199,14 +192,15 @@ function renderKnockoutBracket(matches) {
     `;
 }
 
-async function cargarParticipantes() {
+function renderParticipantes() {
+    if (!participantesSnapshot) {
+        return;
+    }
+
     participantes.innerHTML = "";
     ranking.innerHTML = "";
 
-    const equipos = await cargarEquipos();
-    const querySnapshot = await getDocs(collection(db, "participantes"));
-
-    const cantidad = querySnapshot.size;
+    const cantidad = participantesSnapshot.size;
     const pozo = cantidad * APORTE;
 
     totalParticipantes.textContent = cantidad;
@@ -215,7 +209,7 @@ async function cargarParticipantes() {
     const listaRanking = [];
     const tarjetasParticipantes = [];
 
-    querySnapshot.forEach(doc => {
+    participantesSnapshot.forEach(doc => {
         const p = doc.data();
         const avatar = `./img/avatars/web/${doc.id}.webp`;
 
@@ -308,6 +302,23 @@ async function cargarParticipantes() {
             `).join("")}
         </ol>
     `;
+}
+
+function iniciarParticipantesEnVivo() {
+    onSnapshot(collection(db, "equipos"), snapshot => {
+        equipos = {};
+
+        snapshot.forEach(doc => {
+            equipos[doc.id] = doc.data();
+        });
+
+        renderParticipantes();
+    });
+
+    onSnapshot(collection(db, "participantes"), snapshot => {
+        participantesSnapshot = snapshot;
+        renderParticipantes();
+    });
 }
 
 function formatFecha(kickoff) {
@@ -404,30 +415,26 @@ function renderBracket(matches, fase = "Todos") {
     `).join("");
 }
 
-async function cargarMatches() {
-    const snapshot = await getDocs(collection(db, "matches"));
-    const data = {};
-
-    snapshot.forEach(doc => {
-        data[doc.id] = doc.data();
-    });
-
-    return data;
-}
-
-async function iniciarLlave() {
-    const matches = await cargarMatches();
-
+function iniciarLlave() {
     document.querySelectorAll(".tab").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            renderBracket(matches, btn.dataset.fase);
+            faseActiva = btn.dataset.fase;
+            renderBracket(matches, faseActiva);
         });
     });
 
-    renderBracket(matches, "Llave");
+    onSnapshot(collection(db, "matches"), snapshot => {
+        matches = {};
+
+        snapshot.forEach(doc => {
+            matches[doc.id] = doc.data();
+        });
+
+        renderBracket(matches, faseActiva);
+    });
 }
 
-cargarParticipantes();
+iniciarParticipantesEnVivo();
 iniciarLlave();

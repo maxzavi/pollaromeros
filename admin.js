@@ -12,7 +12,7 @@ import {
 
 import {
     collection,
-    getDocs,
+    onSnapshot,
     updateDoc,
     doc,
     setDoc
@@ -30,6 +30,8 @@ const userInfo = document.getElementById("userInfo");
 const adminPanel = document.getElementById("adminPanel");
 const equiposAdmin = document.getElementById("equiposAdmin");
 let partidosMap = {};
+let unsubscribeEquipos = null;
+let unsubscribePartidos = null;
 
 btnLogin.onclick = async () => {
 
@@ -53,6 +55,7 @@ onAuthStateChanged(auth, async user => {
     console.log(user);
 
     if (!user) {
+        detenerListeners();
 
         btnLogin.hidden = false;
         btnLogout.hidden = true;
@@ -69,6 +72,7 @@ onAuthStateChanged(auth, async user => {
     userInfo.innerHTML = user.email;
 
     if (user.email !== ADMIN_EMAIL) {
+        detenerListeners();
 
         adminPanel.hidden = true;
         userInfo.innerHTML += "<br>No autorizado";
@@ -83,35 +87,52 @@ onAuthStateChanged(auth, async user => {
     cargarPartidos();
 });
 
-async function cargarEquipos(){
+function detenerListeners() {
+    if (unsubscribeEquipos) {
+        unsubscribeEquipos();
+        unsubscribeEquipos = null;
+    }
+
+    if (unsubscribePartidos) {
+        unsubscribePartidos();
+        unsubscribePartidos = null;
+    }
+}
+
+function cargarEquipos(){
+    if (unsubscribeEquipos) {
+        unsubscribeEquipos();
+    }
 
     equiposAdmin.innerHTML="";
 
-    const snapshot = await getDocs(collection(db,"equipos"));
+    unsubscribeEquipos = onSnapshot(collection(db,"equipos"), snapshot => {
+        equiposAdmin.innerHTML="";
 
-    snapshot.forEach(d=>{
+        snapshot.forEach(d=>{
 
-        const e = d.data();
+            const e = d.data();
 
-        equiposAdmin.innerHTML += `
-            <div class="fila">
+            equiposAdmin.innerHTML += `
+                <div class="fila">
 
-                <span>${e.nombre}</span>
+                    <span>${e.nombre}</span>
 
-                <select onchange="actualizar('${d.id}',this.value)">
+                    <select onchange="actualizar('${d.id}',this.value)">
 
-                    <option ${e.resultado=="grupos"?"selected":""}>grupos</option>
-                    <option ${e.resultado=="octavos"?"selected":""}>octavos</option>
-                    <option ${e.resultado=="cuartos"?"selected":""}>cuartos</option>
-                    <option ${e.resultado=="semifinal"?"selected":""}>semifinal</option>
-                    <option ${e.resultado=="subcampeon"?"selected":""}>subcampeon</option>
-                    <option ${e.resultado=="campeon"?"selected":""}>campeon</option>
+                        <option ${e.resultado=="grupos"?"selected":""}>grupos</option>
+                        <option ${e.resultado=="octavos"?"selected":""}>octavos</option>
+                        <option ${e.resultado=="cuartos"?"selected":""}>cuartos</option>
+                        <option ${e.resultado=="semifinal"?"selected":""}>semifinal</option>
+                        <option ${e.resultado=="subcampeon"?"selected":""}>subcampeon</option>
+                        <option ${e.resultado=="campeon"?"selected":""}>campeon</option>
 
-                </select>
+                    </select>
 
-            </div>
-        `;
+                </div>
+            `;
 
+        });
     });
 
 }
@@ -193,9 +214,71 @@ function flagImg(team) {
         : `<span class="bandera-placeholder">🏳️</span>`;
 }
 
+function numeroOpcional(valor) {
+    return valor === "" ? null : Number(valor);
+}
+
+function calcularGanador(score1, score2, pen1, pen2, team1, team2) {
+    if (score1 === null || score2 === null) {
+        return null;
+    }
+
+    if (score1 > score2) {
+        return team1;
+    }
+
+    if (score2 > score1) {
+        return team2;
+    }
+
+    if (pen1 === null || pen2 === null) {
+        return null;
+    }
+
+    if (pen1 > pen2) {
+        return team1;
+    }
+
+    if (pen2 > pen1) {
+        return team2;
+    }
+
+    return null;
+}
+
+function leerResultadoPartido(id, team1, team2) {
+    const score1 = numeroOpcional(document.getElementById(`${id}_score1`).value);
+    const score2 = numeroOpcional(document.getElementById(`${id}_score2`).value);
+    const pen1 = numeroOpcional(document.getElementById(`${id}_pen1`).value);
+    const pen2 = numeroOpcional(document.getElementById(`${id}_pen2`).value);
+
+    return {
+        score1,
+        score2,
+        pen1,
+        pen2,
+        winner: calcularGanador(score1, score2, pen1, pen2, team1, team2)
+    };
+}
+
+function actualizarGanadorPartido(id, team1, team2) {
+    const winnerSelect = document.getElementById(`${id}_winner`);
+    const { winner } = leerResultadoPartido(id, team1, team2);
+
+    winnerSelect.value = winner || "";
+}
+
 function crearTarjetaPartido(p) {
     const team1 = teamName(p.team1, partidosMap);
     const team2 = teamName(p.team2, partidosMap);
+    const winner = calcularGanador(
+        p.score1 ?? null,
+        p.score2 ?? null,
+        p.pen1 ?? null,
+        p.pen2 ?? null,
+        team1,
+        team2
+    );
     const row = document.createElement("div");
 
     row.className = "match-admin";
@@ -232,10 +315,10 @@ function crearTarjetaPartido(p) {
         <div class="winner-select">
             <label>Ganador</label>
 
-            <select id="${p.id}_winner">
+            <select id="${p.id}_winner" disabled>
                 <option value="">Pendiente</option>
-                <option value="${team1}" ${p.winner === team1 ? "selected" : ""}>${team1}</option>
-                <option value="${team2}" ${p.winner === team2 ? "selected" : ""}>${team2}</option>
+                <option value="${team1}" ${winner === team1 ? "selected" : ""}>${team1}</option>
+                <option value="${team2}" ${winner === team2 ? "selected" : ""}>${team2}</option>
             </select>
         </div>
 
@@ -246,6 +329,10 @@ function crearTarjetaPartido(p) {
 
     const saveButton = row.querySelector(".save-match");
     saveButton.addEventListener("click", () => guardarPartido(p.id, saveButton));
+
+    row
+        .querySelectorAll("input")
+        .forEach(input => input.addEventListener("input", () => actualizarGanadorPartido(p.id, team1, team2)));
 
     return row;
 }
@@ -276,44 +363,42 @@ function renderizarPartidosDependientes(id, visitados = new Set()) {
         });
 }
 
-async function cargarPartidos() {
+function cargarPartidos() {
+    if (unsubscribePartidos) {
+        unsubscribePartidos();
+    }
+
     matchesAdmin.innerHTML = "";
 
-    const snapshot = await getDocs(collection(db, "matches"));
+    unsubscribePartidos = onSnapshot(collection(db, "matches"), snapshot => {
+        matchesAdmin.innerHTML = "";
 
-    partidosMap = {};
-    const partidos = [];
+        partidosMap = {};
+        const partidos = [];
 
-    snapshot.forEach(d => {
-        const item = { id: d.id, ...d.data() };
-        partidosMap[d.id] = item;
-        partidos.push(item);
+        snapshot.forEach(d => {
+            const item = { id: d.id, ...d.data() };
+            partidosMap[d.id] = item;
+            partidos.push(item);
+        });
+
+        partidos.sort((a, b) => {
+            if (a.kickoff && b.kickoff) {
+                return new Date(a.kickoff) - new Date(b.kickoff);
+            }
+
+            return a.orden - b.orden;
+        });
+
+        partidos.forEach(p => matchesAdmin.appendChild(crearTarjetaPartido(p)));
     });
-
-    partidos.sort((a, b) => {
-        if (a.kickoff && b.kickoff) {
-            return new Date(a.kickoff) - new Date(b.kickoff);
-        }
-
-        return a.orden - b.orden;
-    });
-
-    partidos.forEach(p => matchesAdmin.appendChild(crearTarjetaPartido(p)));
 }
 async function guardarPartido(id, boton) {
-    const score1 = document.getElementById(`${id}_score1`).value;
-    const score2 = document.getElementById(`${id}_score2`).value;
-    const pen1 = document.getElementById(`${id}_pen1`).value;
-    const pen2 = document.getElementById(`${id}_pen2`).value;
-    const winner = document.getElementById(`${id}_winner`).value;
+    const partido = partidosMap[id];
+    const team1 = teamName(partido.team1, partidosMap);
+    const team2 = teamName(partido.team2, partidosMap);
 
-    const cambios = {
-        score1: score1 === "" ? null : Number(score1),
-        score2: score2 === "" ? null : Number(score2),
-        pen1: pen1 === "" ? null : Number(pen1),
-        pen2: pen2 === "" ? null : Number(pen2),
-        winner: winner || null
-    };
+    const cambios = leerResultadoPartido(id, team1, team2);
 
     if (boton) {
         boton.disabled = true;
