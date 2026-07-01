@@ -29,6 +29,7 @@ const btnLogout = document.getElementById("btnLogout");
 const userInfo = document.getElementById("userInfo");
 const adminPanel = document.getElementById("adminPanel");
 const equiposAdmin = document.getElementById("equiposAdmin");
+let partidosMap = {};
 
 btnLogin.onclick = async () => {
 
@@ -191,12 +192,96 @@ function flagImg(team) {
         ? `<img class="bandera" src="${flags[team]}" alt="${team}">`
         : `<span class="bandera-placeholder">🏳️</span>`;
 }
+
+function crearTarjetaPartido(p) {
+    const team1 = teamName(p.team1, partidosMap);
+    const team2 = teamName(p.team2, partidosMap);
+    const row = document.createElement("div");
+
+    row.className = "match-admin";
+    row.dataset.matchId = p.id;
+
+    row.innerHTML = `
+        <div class="match-admin-header">
+            <div>
+                <h3>${p.id}</h3>
+                <small>${p.fase}<br>${formatFecha(p.kickoff)}</small>
+            </div>
+        </div>
+
+        <div class="team-admin">
+            <div class="team-admin-name">
+                ${flagImg(team1)}
+                <span>${team1}</span>
+            </div>
+
+            <input id="${p.id}_score1" type="number" value="${p.score1 ?? ""}" placeholder="GF">
+            <input id="${p.id}_pen1" type="number" value="${p.pen1 ?? ""}" placeholder="Pen">
+        </div>
+
+        <div class="team-admin">
+            <div class="team-admin-name">
+                ${flagImg(team2)}
+                <span>${team2}</span>
+            </div>
+
+            <input id="${p.id}_score2" type="number" value="${p.score2 ?? ""}" placeholder="GF">
+            <input id="${p.id}_pen2" type="number" value="${p.pen2 ?? ""}" placeholder="Pen">
+        </div>
+
+        <div class="winner-select">
+            <label>Ganador</label>
+
+            <select id="${p.id}_winner">
+                <option value="">Pendiente</option>
+                <option value="${team1}" ${p.winner === team1 ? "selected" : ""}>${team1}</option>
+                <option value="${team2}" ${p.winner === team2 ? "selected" : ""}>${team2}</option>
+            </select>
+        </div>
+
+        <button class="save-match" type="button">
+            💾 Guardar resultado
+        </button>
+    `;
+
+    const saveButton = row.querySelector(".save-match");
+    saveButton.addEventListener("click", () => guardarPartido(p.id, saveButton));
+
+    return row;
+}
+
+function renderizarPartido(id) {
+    const actual = matchesAdmin.querySelector(`[data-match-id="${id}"]`);
+    const partido = partidosMap[id];
+
+    if (!actual || !partido) {
+        return;
+    }
+
+    actual.replaceWith(crearTarjetaPartido(partido));
+}
+
+function renderizarPartidosDependientes(id, visitados = new Set()) {
+    if (visitados.has(id)) {
+        return;
+    }
+
+    visitados.add(id);
+
+    Object.values(partidosMap)
+        .filter(p => p.team1 === id || p.team2 === id)
+        .forEach(p => {
+            renderizarPartido(p.id);
+            renderizarPartidosDependientes(p.id, visitados);
+        });
+}
+
 async function cargarPartidos() {
     matchesAdmin.innerHTML = "";
 
     const snapshot = await getDocs(collection(db, "matches"));
 
-    const partidosMap = {};
+    partidosMap = {};
     const partidos = [];
 
     snapshot.forEach(d => {
@@ -213,77 +298,49 @@ async function cargarPartidos() {
         return a.orden - b.orden;
     });
 
-    partidos.forEach(p => {
-        const team1 = teamName(p.team1, partidosMap);
-        const team2 = teamName(p.team2, partidosMap);
-
-        const row = document.createElement("div");
-        row.className = "match-admin";
-
-        row.innerHTML = `
-            <div class="match-admin-header">
-                <div>
-                    <h3>${p.id}</h3>
-                    <small>${p.fase}<br>${formatFecha(p.kickoff)}</small>
-                </div>
-            </div>
-
-            <div class="team-admin">
-                <div class="team-admin-name">
-                    ${flagImg(team1)}
-                    <span>${team1}</span>
-                </div>
-
-                <input id="${p.id}_score1" type="number" value="${p.score1 ?? ""}" placeholder="GF">
-                <input id="${p.id}_pen1" type="number" value="${p.pen1 ?? ""}" placeholder="Pen">
-            </div>
-
-            <div class="team-admin">
-                <div class="team-admin-name">
-                    ${flagImg(team2)}
-                    <span>${team2}</span>
-                </div>
-
-                <input id="${p.id}_score2" type="number" value="${p.score2 ?? ""}" placeholder="GF">
-                <input id="${p.id}_pen2" type="number" value="${p.pen2 ?? ""}" placeholder="Pen">
-            </div>
-
-            <div class="winner-select">
-                <label>Ganador</label>
-
-                <select id="${p.id}_winner">
-                    <option value="">Pendiente</option>
-                    <option value="${team1}" ${p.winner === team1 ? "selected" : ""}>${team1}</option>
-                    <option value="${team2}" ${p.winner === team2 ? "selected" : ""}>${team2}</option>
-                </select>
-            </div>
-
-            <button class="save-match" onclick="guardarPartido('${p.id}')">
-                💾 Guardar resultado
-            </button>
-        `;
-
-        matchesAdmin.appendChild(row);
-    });
+    partidos.forEach(p => matchesAdmin.appendChild(crearTarjetaPartido(p)));
 }
-window.guardarPartido = async function(id) {
+async function guardarPartido(id, boton) {
     const score1 = document.getElementById(`${id}_score1`).value;
     const score2 = document.getElementById(`${id}_score2`).value;
     const pen1 = document.getElementById(`${id}_pen1`).value;
     const pen2 = document.getElementById(`${id}_pen2`).value;
     const winner = document.getElementById(`${id}_winner`).value;
 
-    await updateDoc(doc(db, "matches", id), {
+    const cambios = {
         score1: score1 === "" ? null : Number(score1),
         score2: score2 === "" ? null : Number(score2),
         pen1: pen1 === "" ? null : Number(pen1),
         pen2: pen2 === "" ? null : Number(pen2),
         winner: winner || null
-    });
+    };
 
-    userInfo.textContent = `Partido ${id} actualizado`;
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Guardando...";
+    }
 
-    cargarPartidos();
-};
+    try {
+        await updateDoc(doc(db, "matches", id), cambios);
 
+        partidosMap[id] = {
+            ...partidosMap[id],
+            ...cambios
+        };
 
+        userInfo.textContent = `Partido ${id} actualizado`;
+
+        renderizarPartidosDependientes(id);
+    } catch (e) {
+        console.error(e);
+        userInfo.textContent = `Error actualizando ${id}`;
+        alert(e.message);
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.textContent = "💾 Guardar resultado";
+        }
+    }
+}
+
+window.guardarPartido = guardarPartido;
