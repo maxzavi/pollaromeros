@@ -213,6 +213,7 @@ async function cargarParticipantes() {
     pozoAcumulado.textContent = `S/. ${pozo.toFixed(2)}`;
 
     const listaRanking = [];
+    const tarjetasParticipantes = [];
 
     querySnapshot.forEach(doc => {
         const p = doc.data();
@@ -260,7 +261,11 @@ async function cargarParticipantes() {
             </div>
         `;
 
-        participantes.innerHTML += html;
+        tarjetasParticipantes.push({
+            nombre: p.nombre,
+            puntos: total,
+            html
+        });
 
         listaRanking.push({
             nombre: p.nombre,
@@ -269,7 +274,23 @@ async function cargarParticipantes() {
         });
     });
 
-    listaRanking.sort((a, b) => b.puntos - a.puntos);
+    tarjetasParticipantes.sort((a, b) => {
+        if (b.puntos !== a.puntos) {
+            return b.puntos - a.puntos;
+        }
+
+        return a.nombre.localeCompare(b.nombre, "es");
+    });
+
+    listaRanking.sort((a, b) => {
+        if (b.puntos !== a.puntos) {
+            return b.puntos - a.puntos;
+        }
+
+        return a.nombre.localeCompare(b.nombre, "es");
+    });
+
+    participantes.innerHTML = tarjetasParticipantes.map(p => p.html).join("");
 
     rankingPanel.hidden = false;
 
