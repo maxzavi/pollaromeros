@@ -359,6 +359,13 @@ h2 {
     border-left-color:#f59e0b;
 }
 
+.bracket-match.is-finalized,
+.match-card.is-finalized{
+    background:#f8fafc;
+    border-color:#cbd5e1;
+    border-left-color:#475569;
+}
+
 .bracket-match-head,
 .match-card-head{
     display:flex;
@@ -466,6 +473,11 @@ h2 {
     color:#92400e;
 }
 
+.is-finalized .match-status{
+    background:#e2e8f0;
+    color:#334155;
+}
+
 .match-date{
     font-size:12px;
     color:#777;
@@ -511,6 +523,12 @@ h2 {
     background:#fffdf7;
     border-color:#eadfbf;
     border-left-color:#f59e0b;
+}
+
+.match-admin.is-finalized{
+    background:#f8fafc;
+    border-color:#cbd5e1;
+    border-left-color:#475569;
 }
 
 .match-admin-header{
@@ -584,21 +602,53 @@ h2 {
     opacity:1;
 }
 
-.save-match{
+.team-admin input:disabled{
+    background:#eef2f7;
+    color:#475569;
+    cursor:not-allowed;
+}
+
+.match-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+}
+
+.save-match,
+.finalize-match{
     cursor:pointer;
     font-size:15px;
-    margin-top:14px;
     width:100%;
     border:none;
-    background:#1565C0;
-    color:white;
     border-radius:8px;
     padding:12px;
     font-weight:bold;
 }
 
+.save-match{
+    background:#1565C0;
+    color:white;
+}
+
 .save-match:hover{
     background:#0d47a1;
+}
+
+.finalize-match{
+    background:#111827;
+    color:white;
+}
+
+.finalize-match:hover{
+    background:#020617;
+}
+
+.save-match:disabled,
+.finalize-match:disabled{
+    background:#cbd5e1;
+    color:#64748b;
+    cursor:not-allowed;
 }
 
 @media(max-width:420px){

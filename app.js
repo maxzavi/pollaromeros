@@ -48,7 +48,19 @@ function tieneMarcador(match) {
 }
 
 function estadoPartido(match) {
+    if (match.finalizado === true) {
+        return "Finalizado";
+    }
+
     return tieneMarcador(match) ? "Con marcador" : "Pendiente";
+}
+
+function claseEstadoPartido(match) {
+    if (match.finalizado === true) {
+        return "is-finalized";
+    }
+
+    return tieneMarcador(match) ? "is-scored" : "is-pending";
 }
 
 function medalla(index) {
@@ -124,7 +136,7 @@ function renderBracketNode(match, matches) {
 
     const team1 = getMatchTeam(match, "team1", matches);
     const team2 = getMatchTeam(match, "team2", matches);
-    const statusClass = tieneMarcador(match) ? "is-scored" : "is-pending";
+    const statusClass = claseEstadoPartido(match);
     const source = matches[match.team1] || matches[match.team2]
         ? `<div class="bracket-source">← ${match.team1} + ${match.team2}</div>`
         : "";
@@ -415,7 +427,7 @@ function renderBracket(matches, fase = "Todos") {
             ${partidos.map(m => {
                 const equipo1 = resolverEquipo(m.team1, matches);
                 const equipo2 = resolverEquipo(m.team2, matches);
-                const statusClass = tieneMarcador(m) ? "is-scored" : "is-pending";
+                const statusClass = claseEstadoPartido(m);
 
                 return `
                     <div class="match-card ${statusClass}">

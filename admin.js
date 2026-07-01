@@ -280,6 +280,8 @@ function crearTarjetaPartido(p) {
     const team1 = teamName(p.team1, partidosMap);
     const team2 = teamName(p.team2, partidosMap);
     const tieneMarcador = p.score1 !== null && p.score1 !== undefined && p.score2 !== null && p.score2 !== undefined;
+    const finalizado = p.finalizado === true;
+    const disabled = finalizado ? "disabled" : "";
     const winner = calcularGanador(
         p.score1 ?? null,
         p.score2 ?? null,
@@ -290,7 +292,7 @@ function crearTarjetaPartido(p) {
     );
     const row = document.createElement("div");
 
-    row.className = `match-admin ${tieneMarcador ? "is-scored" : "is-pending"}`;
+    row.className = `match-admin ${tieneMarcador ? "is-scored" : "is-pending"} ${finalizado ? "is-finalized" : ""}`;
     row.dataset.matchId = p.id;
 
     row.innerHTML = `
@@ -299,7 +301,7 @@ function crearTarjetaPartido(p) {
                 <h3>${p.id}</h3>
                 <small>${p.fase}<br>${formatFecha(p.kickoff)}</small>
             </div>
-            <span class="match-status">${tieneMarcador ? "Con marcador" : "Pendiente"}</span>
+            <span class="match-status">${finalizado ? "Finalizado" : tieneMarcador ? "Con marcador" : "Pendiente"}</span>
         </div>
 
         <div class="team-admin">
@@ -308,8 +310,8 @@ function crearTarjetaPartido(p) {
                 <span>${team1}</span>
             </div>
 
-            <input id="${p.id}_score1" type="number" value="${p.score1 ?? ""}" placeholder="GF">
-            <input id="${p.id}_pen1" type="number" value="${p.pen1 ?? ""}" placeholder="Pen">
+            <input id="${p.id}_score1" type="number" value="${p.score1 ?? ""}" placeholder="GF" ${disabled}>
+            <input id="${p.id}_pen1" type="number" value="${p.pen1 ?? ""}" placeholder="Pen" ${disabled}>
         </div>
 
         <div class="team-admin">
@@ -318,8 +320,8 @@ function crearTarjetaPartido(p) {
                 <span>${team2}</span>
             </div>
 
-            <input id="${p.id}_score2" type="number" value="${p.score2 ?? ""}" placeholder="GF">
-            <input id="${p.id}_pen2" type="number" value="${p.pen2 ?? ""}" placeholder="Pen">
+            <input id="${p.id}_score2" type="number" value="${p.score2 ?? ""}" placeholder="GF" ${disabled}>
+            <input id="${p.id}_pen2" type="number" value="${p.pen2 ?? ""}" placeholder="Pen" ${disabled}>
         </div>
 
         <div class="winner-select">
@@ -332,13 +334,21 @@ function crearTarjetaPartido(p) {
             </select>
         </div>
 
-        <button class="save-match" type="button">
+        <div class="match-actions">
+        <button class="save-match" type="button" ${disabled}>
             💾 Guardar resultado
         </button>
+        <button class="finalize-match" type="button" ${disabled}>
+            Finalizar
+        </button>
+        </div>
     `;
 
     const saveButton = row.querySelector(".save-match");
+    const finalizeButton = row.querySelector(".finalize-match");
+
     saveButton.addEventListener("click", () => guardarPartido(p.id, saveButton));
+    finalizeButton.addEventListener("click", () => finalizarPartido(p.id, finalizeButton));
 
     row
         .querySelectorAll("input")
@@ -405,6 +415,12 @@ function cargarPartidos() {
 }
 async function guardarPartido(id, boton) {
     const partido = partidosMap[id];
+
+    if (partido.finalizado === true) {
+        userInfo.textContent = `Partido ${id} ya está finalizado`;
+        return;
+    }
+
     const team1 = teamName(partido.team1, partidosMap);
     const team2 = teamName(partido.team2, partidosMap);
 
@@ -434,6 +450,61 @@ async function guardarPartido(id, boton) {
         if (boton) {
             boton.disabled = false;
             boton.textContent = "💾 Guardar resultado";
+        }
+    }
+}
+
+async function finalizarPartido(id, boton) {
+    const partido = partidosMap[id];
+    const team1 = teamName(partido.team1, partidosMap);
+    const team2 = teamName(partido.team2, partidosMap);
+    const resultado = leerResultadoPartido(id, team1, team2);
+
+    if (resultado.score1 === null || resultado.score2 === null) {
+        userInfo.textContent = `Completa los goles de ${id} antes de finalizar`;
+        return;
+    }
+
+    if (!resultado.winner) {
+        userInfo.textContent = `Completa los penales de ${id} para definir ganador`;
+        return;
+    }
+
+    if (!confirm(`¿Finalizar el partido ${id}? Ya no se podrá editar el marcador desde admin.`)) {
+        return;
+    }
+
+    const cambios = {
+        ...resultado,
+        finalizado: true
+    };
+    let finalizadoOk = false;
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = "Finalizando...";
+    }
+
+    try {
+        await updateDoc(doc(db, "matches", id), cambios);
+
+        partidosMap[id] = {
+            ...partidosMap[id],
+            ...cambios
+        };
+        finalizadoOk = true;
+
+        userInfo.textContent = `Partido ${id} finalizado`;
+        renderizarPartido(id);
+        renderizarPartidosDependientes(id);
+    } catch (e) {
+        console.error(e);
+        userInfo.textContent = `Error finalizando ${id}`;
+        alert(e.message);
+    } finally {
+        if (boton && !finalizadoOk) {
+            boton.disabled = false;
+            boton.textContent = "Finalizar";
         }
     }
 }
