@@ -76,6 +76,129 @@ function renderTeam(nombre, score, penalties, isWinner) {
     `;
 }
 
+function getMatchTeam(match, side, matches) {
+    const team = resolverEquipo(match[side], matches);
+    const score = side === "team1" ? match.score1 : match.score2;
+    const penalties = side === "team1" ? match.pen1 : match.pen2;
+    const isWinner = match.winner === team;
+
+    return { team, score, penalties, isWinner };
+}
+
+function renderBracketTeamLine(teamData) {
+    const flag = flags[teamData.team];
+    const marcador = teamData.score ?? "";
+    const penales = teamData.penalties !== null && teamData.penalties !== undefined
+        ? ` (${teamData.penalties})`
+        : "";
+
+    return `
+        <div class="bracket-team-line ${teamData.isWinner ? "winner" : ""}">
+            <span>
+                ${
+                    flag
+                        ? `<img class="bandera" src="${flag}" alt="${teamData.team}">`
+                        : `<span class="bandera-placeholder">🏳️</span>`
+                }
+                ${teamData.team}
+            </span>
+            <strong>${marcador}${penales}</strong>
+        </div>
+    `;
+}
+
+function renderBracketNode(match, matches) {
+    if (!match) {
+        return `
+            <div class="bracket-match empty">
+                <div class="bracket-match-id">Pendiente</div>
+                <div class="bracket-team-line"><span>TBD</span><strong></strong></div>
+                <div class="bracket-team-line"><span>TBD</span><strong></strong></div>
+            </div>
+        `;
+    }
+
+    const team1 = getMatchTeam(match, "team1", matches);
+    const team2 = getMatchTeam(match, "team2", matches);
+    const source = matches[match.team1] || matches[match.team2]
+        ? `<div class="bracket-source">← ${match.team1} + ${match.team2}</div>`
+        : "";
+
+    return `
+        <div class="bracket-match">
+            <div class="bracket-match-id">${match.id} · ${match.fase}</div>
+            ${source}
+            ${renderBracketTeamLine(team1)}
+            ${renderBracketTeamLine(team2)}
+        </div>
+    `;
+}
+
+function renderKnockoutBracket(matches) {
+    const container = document.getElementById("bracketContainer");
+    const lista = Object.entries(matches).map(([id, data]) => ({ id, ...data }));
+    const porId = Object.fromEntries(lista.map(match => [match.id, match]));
+
+    const rondas = [
+        { title: "16avos", ids: ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15", "L16"] },
+        { title: "Octavos", ids: ["O1", "O2", "O3", "O4", "O5", "O6", "O7", "O8"] },
+        { title: "Cuartos", ids: ["C1", "C2", "C3", "C4"] },
+        { title: "Semis", ids: ["S1", "S2"] },
+        { title: "Final", ids: ["F1"] }
+    ];
+
+    const posiciones = {};
+    let hoja = 0;
+
+    function calcularPosicion(id) {
+        if (posiciones[id] !== undefined) {
+            return posiciones[id];
+        }
+
+        const match = porId[id];
+
+        if (!match) {
+            posiciones[id] = hoja;
+            hoja += 2;
+            return posiciones[id];
+        }
+
+        const hijos = [match.team1, match.team2].filter(ref => porId[ref]);
+
+        if (hijos.length === 0) {
+            posiciones[id] = hoja;
+            hoja += 2;
+            return posiciones[id];
+        }
+
+        const posicionHijos = hijos.map(calcularPosicion);
+        posiciones[id] = posicionHijos.reduce((total, posicion) => total + posicion, 0) / posicionHijos.length;
+
+        return posiciones[id];
+    }
+
+    calcularPosicion("F1");
+
+    container.innerHTML = `
+        <div class="knockout-shell">
+            <div class="knockout-bracket">
+                ${rondas.map(round => `
+                    <section class="bracket-round bracket-round-${round.ids.length}">
+                        <h3>${round.title}</h3>
+                        <div class="bracket-round-matches">
+                            ${round.ids.map(id => `
+                                <div class="bracket-slot" style="grid-row:${Math.round(posiciones[id] || 0) + 1} / span 2">
+                                    ${renderBracketNode(porId[id], matches)}
+                                </div>
+                            `).join("")}
+                        </div>
+                    </section>
+                `).join("")}
+            </div>
+        </div>
+    `;
+}
+
 async function cargarParticipantes() {
     participantes.innerHTML = "";
     ranking.innerHTML = "";
@@ -204,6 +327,11 @@ function resolverEquipo(ref, matches) {
 }
 
 function renderBracket(matches, fase = "Todos") {
+    if (fase === "Llave") {
+        renderKnockoutBracket(matches);
+        return;
+    }
+
     const container = document.getElementById("bracketContainer");
 
     let lista = Object.entries(matches)
@@ -277,7 +405,7 @@ async function iniciarLlave() {
         });
     });
 
-    renderBracket(matches, "Todos");
+    renderBracket(matches, "Llave");
 }
 
 cargarParticipantes();
