@@ -262,15 +262,24 @@ function leerResultadoPartido(id, team1, team2) {
 }
 
 function actualizarGanadorPartido(id, team1, team2) {
+    const row = document.querySelector(`[data-match-id="${id}"]`);
     const winnerSelect = document.getElementById(`${id}_winner`);
-    const { winner } = leerResultadoPartido(id, team1, team2);
+    const { score1, score2, winner } = leerResultadoPartido(id, team1, team2);
+    const tieneMarcador = score1 !== null && score2 !== null;
 
     winnerSelect.value = winner || "";
+
+    if (row) {
+        row.classList.toggle("is-scored", tieneMarcador);
+        row.classList.toggle("is-pending", !tieneMarcador);
+        row.querySelector(".match-status").textContent = tieneMarcador ? "Con marcador" : "Pendiente";
+    }
 }
 
 function crearTarjetaPartido(p) {
     const team1 = teamName(p.team1, partidosMap);
     const team2 = teamName(p.team2, partidosMap);
+    const tieneMarcador = p.score1 !== null && p.score1 !== undefined && p.score2 !== null && p.score2 !== undefined;
     const winner = calcularGanador(
         p.score1 ?? null,
         p.score2 ?? null,
@@ -281,7 +290,7 @@ function crearTarjetaPartido(p) {
     );
     const row = document.createElement("div");
 
-    row.className = "match-admin";
+    row.className = `match-admin ${tieneMarcador ? "is-scored" : "is-pending"}`;
     row.dataset.matchId = p.id;
 
     row.innerHTML = `
@@ -290,6 +299,7 @@ function crearTarjetaPartido(p) {
                 <h3>${p.id}</h3>
                 <small>${p.fase}<br>${formatFecha(p.kickoff)}</small>
             </div>
+            <span class="match-status">${tieneMarcador ? "Con marcador" : "Pendiente"}</span>
         </div>
 
         <div class="team-admin">
